@@ -1,0 +1,9 @@
+engines:
+  duplication:
+    enabled: false
+
+ratings:
+  paths:
+    - "pytj/**/*"
+
+exclude_paths:

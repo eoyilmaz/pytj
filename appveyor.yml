@@ -1,0 +1,17 @@
+build: false
+
+environment:
+  matrix:
+    - PY27:
+      PYTHON: "C:\\Python27-x64"
+      RUBY_VERSION: "22"
+    - PY35:
+      PYTHON: "C:\\Python35-x64"
+      RUBY_VERSION: "22"
+
+init:
+  - SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
+  - python --version
+
+test_script:
+  - py.test -n auto --cov-report term --cov=pytj tests

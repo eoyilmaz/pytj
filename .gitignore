@@ -1,0 +1,16 @@
+*~*
+*.pyc
+docs/html/*
+docs/build/*
+docs/latex/*
+docs/doctrees/*
+docs/source/generated/*
+.cache/*
+.coverage
+.DS_Store
+dist/*
+build/*
+pytj.egg-info/*
+include/*
+local
+*.swp

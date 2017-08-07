@@ -1,0 +1,16 @@
+include *.ini *.cfg
+
+include CHANGELOG.rst
+include README.rst
+include INSTALL
+include MANIFEST.in
+include COPYING
+include COPYING.LESSER
+include doTests
+
+recursive-include docs *
+recursive-include examples *
+recursive-include tests *
+
+prune docs/build
+prune docs/source/generated
