@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+# pyTJ
+# Copyright (C) 2017 Erkan Ozgur Yilmaz
+#
+# This file is part of pyTJ.
+#
+# pyTJ is free software: you can redistribute it and/or modify
+# it under the terms of the Lesser GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License.
+#
+# pyTJ is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# Lesser GNU General Public License for more details.
+#
+# You should have received a copy of the Lesser GNU General Public License
+# along with pyTJ.  If not, see <http://www.gnu.org/licenses/>
+
 import os
 import codecs
 from setuptools import setup, find_packages
@@ -5,7 +23,7 @@ from setuptools import setup, find_packages
 
 NAME = 'pytj'
 PACKAGES = find_packages()
-META_PATH = os.path.join("lib/pytj", "__init__.py")
+META_PATH = os.path.join("pytj", "__init__.py")
 KEYWORDS = ['task', 'juggler', 'project', 'management']
 CLASSIFIERS = ["Programming Language :: Python",
                "Programming Language :: Python :: 2",
@@ -87,4 +105,3 @@ if __name__ == '__main__':
         install_requires=INSTALL_REQUIRES,
         test_requires=TEST_REQUIRES
     )
-

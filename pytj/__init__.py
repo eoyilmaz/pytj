@@ -18,3 +18,16 @@
 
 
 __version__ = "0.0.1"
+
+
+__title__ = "pyTJ"
+__description__ = "Pure Python implementation of TaskJuggler"
+__uri__ = 'http://github.com/eoyilmaz/pyTJ'
+__doc__ = __description__ + " <" + __uri__ + ">"
+
+__author__ = "Erkan Ozgur Yilmaz"
+__email__ = 'eoyilmaz@gmail.com'
+
+__license__ = 'LGPLv3'
+__copyright__ = "Copyright (C) 2017 Erkan Ozgur Yilmaz"
+
