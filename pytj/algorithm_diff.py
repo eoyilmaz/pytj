@@ -53,7 +53,7 @@ class Hunk(object):
         """
         show_separator = False
         if self.insert and self.delete:
-            s = "%sc#%s\n" % (self.a_range, self.b_range)
+            s = "%sc%s\n" % (self.a_range, self.b_range)
             show_separator = True
         elif self.insert:
             s = "%sa%s\n" % (self.a_idx, self.b_range)
@@ -70,6 +70,9 @@ class Hunk(object):
             s = "%s> %s\n" % (s, value)
 
         return s
+
+    def inspect(self):
+        print(self.to_s())
 
     @property
     def a_range(self):
@@ -131,13 +134,10 @@ class Diff(object):
 
         for hunk in self.hunks:
             if hunk.delete:
-                res = res[0: hunk.b_idx] + \
-                      res[hunk.b_idx + len(hunk.delete_values):]
+                res = res[0: hunk.b_idx] + res[hunk.b_idx + len(hunk.delete_values):]
 
             if hunk.insert:
-                res = res[0:hunk.b_idx] + \
-                      hunk.insert_values + \
-                      res[hunk.b_idx:]
+                res = res[0:hunk.b_idx] + hunk.insert_values + res[hunk.b_idx:]
         return res
 
     def edit_script(self):
@@ -168,6 +168,9 @@ class Diff(object):
         """
         value = ''.join(map(Hunk.to_s, self.hunks))
         return value
+
+    def inspect(self):
+        print(self.to_s())
 
     def diff(self, a, b):
         """no docstring on the origin
@@ -206,7 +209,8 @@ class Diff(object):
             self.insert_element(ai, bi, b[bi])
             bi += 1
 
-    def compute_index_translations(self, a, b):
+    @classmethod
+    def compute_index_translations(cls, a, b):
         """Computes the index translation LUT which show what item of the a is
         where on the b.
 
@@ -214,24 +218,119 @@ class Diff(object):
         :param list b:
         :return:
         """
-        import copy
+        # import copy
         index_translation_table = [None] * len(a)
-        b_copy = copy.copy(b)
-        last_index = -1
-        for i in range(len(a)):
-            try:
-                index = b_copy.index(a[i])
-                while index < last_index:
-                    b_copy[index] = None
-                    index = b_copy.index(a[i])
+        # b_copy = copy.copy(b)
+        # last_index = -1
+        # for i in range(len(a)):
+        #     # consider every character once, so if a and b has two of the items
+        #     # return different one for each one
+        #     try:
+        #         index = b_copy.index(a[i])
+        #         while index < last_index:
+        #             b_copy[index] = None
+        #             index = b_copy.index(a[i])
+        #
+        #         last_index = index
+        #         index_translation_table[i] = index
+        #         b_copy[index] = None
+        #     except ValueError:
+        #         continue
 
-                last_index = index
-                index_translation_table[i] = index
-                b_copy[index] = None
-            except ValueError:
+        a_end_idx = len(a) - 1
+        b_end_idx = len(b) - 1
+        start_idx = 0
+
+        # start looking for the same elements from the beginning of a
+        while start_idx < a_end_idx and start_idx < b_end_idx and a[start_idx] ==  b[start_idx]:
+            index_translation_table[start_idx] = start_idx
+            start_idx += 1
+
+        # when we find the first different element
+        # go to the end of the a and b
+        # and start looking for the same elements from the ends of a and b
+        while a_end_idx >= start_idx and b_end_idx >= start_idx and a[a_end_idx]  == b[b_end_idx]:
+            index_translation_table[a_end_idx] = b_end_idx
+            a_end_idx -= 1
+            b_end_idx -= 1
+
+        # now if we have reached to start_idx in both a and b just return
+        # the index_translation_table
+        if start_idx >= a_end_idx and start_idx >= b_end_idx:
+            return index_translation_table
+
+        links = []
+        thresholds = []
+        b_hashes_to_indices = cls.reverse_hash(b, start_idx, b_end_idx)
+
+        for ai in range(start_idx, a_end_idx + 1):
+            a_value = a[ai]
+            if a_value not in b_hashes_to_indices:
                 continue
+            k = None
+            for bi in b_hashes_to_indices[a_value]:
+                if k and thresholds[k] > bi > thresholds[k - 1]:
+                    # This is a Pythonic way to extend the list so that it
+                    # will not raise an IndexError at the next statement
+                    if len(thresholds) < k + 1:
+                        thresholds += [None] * (k - len(thresholds) + 1)
+                    thresholds[k] = bi
+                else:
+                    k = cls.replace_next_larger(thresholds, bi, k)
+                if k is not None:
+                    # This is a Pythonic way to extend the list so that it
+                    # will not raise an IndexError at the next statement
+                    if len(links) < k + 1:
+                        links += [None] * (k - len(links) + 1)
+                    links[k] = [None if k == 0 else links[k - 1], ai, bi]
 
+        if len(thresholds):
+            link = links[len(thresholds) - 1]
+            while link:
+                index_translation_table[link[1]] = link[2]
+                link = link[0]
+
+        print("index_translation_table: %s" % index_translation_table)
         return index_translation_table
+
+    @classmethod
+    def reverse_hash(cls, values, start_idx, end_idx):
+        """
+
+        :param values:
+        :param start_idx:
+        :param end_idx:
+        :return:
+        """
+        hash_ = {}
+        for i in range(start_idx, end_idx + 1):
+            element = values[i]
+            if element in hash_:
+                hash_[element].insert(0, i)
+            else:
+                hash_[element] = [i]
+        return hash_
+
+    @classmethod
+    def replace_next_larger(cls, ary, value, high=None):
+        high = len(ary) if not high else high
+        if not ary or value > ary[-1]:
+            ary.append(value)
+            return high
+        low = 0
+        while low < high:
+            index = int((high + low) / 2)
+            found = ary[index]
+            if value == found:
+                return None
+
+            if value > found:
+                low = index + 1
+            else:
+                high = index
+        ary[low] = value
+
+        return low
 
     def delete_element(self, a_idx, b_idx, value):
         """no docstring at the origin
@@ -241,9 +340,7 @@ class Diff(object):
         :param value:
         :return:
         """
-        if len(self.hunks) == 0 or \
-                                self.hunks[-1].a_idx + len(
-                            self.hunks[-1].delete_values) != a_idx:
+        if len(self.hunks) == 0 or self.hunks[-1].a_idx + len(self.hunks[-1].delete_values) != a_idx:
             hunk = Hunk(a_idx, b_idx)
             self.hunks.append(hunk)
         else:
@@ -258,9 +355,7 @@ class Diff(object):
         :param value:
         :return:
         """
-        if len(self.hunks) == 0 or \
-                        (self.hunks[-1].b_idx + len(
-                            self.hunks[-1].insert_values)) != b_idx:
+        if len(self.hunks) == 0 or (self.hunks[-1].b_idx + len(self.hunks[-1].insert_values)) != b_idx:
             hunk = Hunk(a_idx, b_idx)
             self.hunks.append(hunk)
         else:

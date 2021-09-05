@@ -101,5 +101,5 @@ if __name__ == '__main__':
         zip_safe=True,
         test_suite='pytj',
         install_requires=INSTALL_REQUIRES,
-        test_requires=TEST_REQUIRES
+        tests_require=TEST_REQUIRES
     )
